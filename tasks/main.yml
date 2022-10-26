@@ -1,2 +1,55 @@
 ---
-# tasks file for ansible-bookstack
+- name: Create Bookstack Pod
+  containers.podman.podman_pod:
+    name: '{{ bookstack_hostname }}-pod'
+    state: started
+    network: '{{ bookstack_podman_network }}'
+    ip: '{{ bookstack_podman_ip }}'
+    hostname: '{{ bookstack_hostname}}.{{ bookstack_domain }}'
+
+- name: Create Bookstack MariaDB Volume
+  containers.podman.podman_volume:
+    state: present
+    name: '{{ bookstack_hostname }}-db-volume'
+    label:
+      app: bookstack
+
+- name: Create Bookstack App Volume
+  containers.podman.podman_volume:
+    state: present
+    name: '{{ bookstack_hostname }}-app-volume'
+    label:
+      app: bookstack
+
+- name: Setup MariaDB Container
+  containers.podman.podman_container:
+    name: '{{ bookstack_hostname }}-db'
+    image: lscr.io/linuxserver/mariadb
+    pod: '{{ bookstack_hostname }}-pod'
+    restart_policy: 
+    volume:
+      - '{{ bookstack_hostname }}-db-volume:/config'
+    env:
+      PUID: '1000'
+      PGID: '1000'
+      MYSQL_ROOT_PASSWORD: '{{ bookstack_mariadb_root_pw }}'
+      TZ: '{{ bookstack_tz }}'
+      MYSQL_DATABASE: '{{ bookstack_db }}'
+      MYSQL_USER: '{{ bookstack_mariadb_user }}'
+      MYSQL_PASSWORD: '{{ bookstack_mariadb_pw }}'
+
+- name: Setup Bookstack Container
+  containers.podman.podman_container:
+    name: '{{ bookstack_hostname }}-app'
+    image: lscr.io/linuxserver/bookstack
+    pod: '{{ bookstack_hostname }}-pod'
+    volume:
+      - '{{ bookstack_hostname }}-app-volume:/config'
+    env:
+      PUID: '1000'
+      PGID: '1000'
+      APP_URL: 'https://{{ bookstack_hostname }}.{{ bookstack_domain }}'
+      DB_HOST: '{{ bookstack_podman_ip }}'
+      DB_USER: '{{ bookstack_mariadb_user }}'
+      DB_PASS: '{{ bookstack_mariadb_pw }}'
+      DB_DATABASE: '{{ bookstack_db }}'

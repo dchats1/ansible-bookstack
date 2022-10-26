@@ -1,2 +1,10 @@
 ---
-# defaults file for ansible-bookstack
+bookstack_db: bookstack
+bookstack_domain: example.com
+bookstack_hostname: bookstack
+bookstack_mariadb_pw: my_secure_password
+bookstack_mariadb_root_pw: root_secure_password
+bookstack_mariadb_user: bookstack
+bookstack_podman_ip: 10.88.0.50
+bookstack_podman_network: podman
+bookstack_tz: America/New_York
